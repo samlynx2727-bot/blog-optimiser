@@ -71,7 +71,7 @@ textarea { min-height: 85px; }
   padding: 1rem; min-height: 140px; font-size: 13px; line-height: 1.75;
   white-space: pre-wrap; word-break: break-word;
 }
-.output-box.scrollable { max-height: 420px; overflow-y: auto; }
+.output-box.scrollable { overflow-y: auto; }
 .output-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
 .output-label span { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -140,7 +140,7 @@ textarea { min-height: 85px; }
 .suggestion-proposed { font-size: 12px; color: #1a1a1a; background: #e8f5ee; border-radius: 6px; padding: 6px 9px; margin-top: 5px; border-left: 2px solid #2d7a4f; }
 
 /* Apply suggestions output */
-.apply-output-box { background: #f9f8f5; border: 1px solid #e0ddd6; border-radius: 8px; padding: 1rem; font-size: 13px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; max-height: 520px; overflow-y: auto; }
+.apply-output-box { background: #f9f8f5; border: 1px solid #e0ddd6; border-radius: 8px; padding: 1rem; font-size: 13px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
 
 /* Refine score comparison */
 .score-compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
@@ -449,7 +449,7 @@ textarea { min-height: 85px; }
         <button class="copy-btn" onclick="copyText('out-sheets')">Copy for Sheets</button>
       </div>
       <p class="desc">Tab-separated values — paste directly into Google Sheets. Each field is on its own row.</p>
-      <div class="output-box" id="out-sheets" style="font-size:12px;font-family:monospace;white-space:pre;max-height:320px;overflow-y:auto">Waiting...</div>
+      <div class="output-box" id="out-sheets" style="font-size:12px;font-family:monospace;white-space:pre;overflow-y:auto">Waiting...</div>
     </div>
 
     <div class="card">
@@ -458,7 +458,7 @@ textarea { min-height: 85px; }
         <button class="copy-btn" onclick="copyText('out-html-part1')">Copy Part 1</button>
       </div>
       <p class="desc">Part 1 — content before the mid-content CTA, ready to paste into Webflow.</p>
-      <div class="output-box" id="out-html-part1" style="font-size:11px;font-family:monospace;max-height:320px;overflow-y:auto">Waiting...</div>
+      <div class="output-box" id="out-html-part1" style="font-size:11px;font-family:monospace">Waiting...</div>
     </div>
 
     <div class="card">
@@ -467,7 +467,7 @@ textarea { min-height: 85px; }
         <button class="copy-btn" onclick="copyText('out-html-part2')">Copy Part 2</button>
       </div>
       <p class="desc">Part 2 — content after the mid-content CTA.</p>
-      <div class="output-box" id="out-html-part2" style="font-size:11px;font-family:monospace;max-height:320px;overflow-y:auto">Waiting...</div>
+      <div class="output-box" id="out-html-part2" style="font-size:11px;font-family:monospace">Waiting...</div>
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -644,7 +644,7 @@ async function callClaude(systemPrompt, userPrompt, maxTokens) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: maxTokens || 4000,
+      max_tokens: maxTokens || 8000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     })
@@ -986,7 +986,7 @@ ${allInstructions}
 
 Return the full improved blog post now.`;
 
-    const updated = (await callClaude(sys, prompt, 4000)).replace(/—/g, '–');
+    const updated = (await callClaude(sys, prompt, 8000)).replace(/—/g, '–');
     state.appliedContent = updated;
     document.getElementById('out-applied').textContent = updated;
 
@@ -1065,7 +1065,7 @@ ${state.originalContent}
 LINKS TO ADD:
 ${JSON.stringify(state.linkOpps)}`;
 
-    state.linkedContent = await callClaude(sys2, prompt2, 4000);
+    state.linkedContent = await callClaude(sys2, prompt2, 8000);
     state.workingContent = state.linkedContent;
     document.getElementById('out-linked').textContent = state.linkedContent;
     document.getElementById('btn-to-refine').disabled = false;
@@ -1107,7 +1107,7 @@ ${recsList || 'Apply general AEO/GEO improvements: add TL;DR, Quick Answer, Key 
 
 Return the full improved blog post now.`;
 
-    state.refinedContent = (await callClaude(sys1, prompt1, 4000)).replace(/—/g, '–');
+    state.refinedContent = (await callClaude(sys1, prompt1, 8000)).replace(/—/g, '–');
     document.getElementById('out-refined').textContent = state.refinedContent;
 
     // ── Summary of changes ──
@@ -1222,7 +1222,7 @@ ${checkedRecs.map((r,i) => `${i+1}. ${r}`).join('\n')}
 
 Return the full further-refined blog post now.`;
 
-    state.refinedContent = (await callClaude(sys, prompt, 4000)).replace(/—/g, '–');
+    state.refinedContent = (await callClaude(sys, prompt, 8000)).replace(/—/g, '–');
     document.getElementById('out-refined').textContent = state.refinedContent;
 
     // Re-score
@@ -1346,7 +1346,7 @@ For faqs: extract FAQs from the post.`;
           ${f.count !== undefined ? `<span style="font-size:10px;color:${f.count > (f.label.includes('Meta Title') ? 60 : f.label.includes('Tile') ? 65 : 180) ? '#c0392b' : '#2d7a4f'}">${f.count} chars</span>` : ''}
         </div>
         ${f.note ? `<div style="font-size:10px;color:#aaa;margin-bottom:4px">${f.note}</div>` : ''}
-        <div class="field-val" style="white-space:pre-wrap;${f.large ? 'max-height:200px;overflow-y:auto;font-size:12px' : ''}">${f.value || '—'}</div>
+        <div class="field-val" style="white-space:pre-wrap;${f.large ? 'font-size:12px' : ''}">${f.value || '—'}</div>
       </div>`).join('');
 
     state.templateFields = templateFields;
@@ -1361,7 +1361,7 @@ For faqs: extract FAQs from the post.`;
     const sys2 = `Convert markdown blog content to clean semantic HTML for Webflow. Use <h2>, <h3>, <p>, <ul>, <li>, <strong>, <a> tags. No <h1>. No wrapping article tag. Return only the HTML — no explanation, no backticks.`;
 
     if (meta.content_part1) {
-      const html1 = await callClaude(sys2, `Convert to HTML for Webflow:\n\n${meta.content_part1}`, 3000);
+      const html1 = await callClaude(sys2, `Convert to HTML for Webflow:\n\n${meta.content_part1}`, 4000);
       document.getElementById('out-html-part1').textContent = html1;
       state.htmlPart1 = html1;
     } else {
@@ -1369,7 +1369,7 @@ For faqs: extract FAQs from the post.`;
     }
 
     if (meta.content_part2) {
-      const html2 = await callClaude(sys2, `Convert to HTML for Webflow:\n\n${meta.content_part2}`, 3000);
+      const html2 = await callClaude(sys2, `Convert to HTML for Webflow:\n\n${meta.content_part2}`, 4000);
       document.getElementById('out-html-part2').textContent = html2;
       state.htmlPart2 = html2;
     } else {
