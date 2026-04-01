@@ -117,20 +117,30 @@ textarea { min-height: 85px; }
 /* Suggestion / annotation styles */
 .suggestion-item {
   background: #fff; border: 1px solid #e0ddd6; border-radius: 10px;
-  padding: 1rem 1.1rem; margin-bottom: 10px;
+  padding: 1rem 1.1rem; margin-bottom: 10px; transition: opacity 0.2s;
 }
 .suggestion-item.fix { border-left: 3px solid #c0392b; }
 .suggestion-item.warn { border-left: 3px solid #b5720a; }
 .suggestion-item.ok { border-left: 3px solid #2d7a4f; }
+.suggestion-item.unchecked { opacity: 0.45; }
+.suggestion-checkbox-row { display: flex; align-items: flex-start; gap: 11px; }
+.suggestion-checkbox-row input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; accent-color: #1a1a1a; }
+.suggestion-body { flex: 1; }
 .suggestion-header { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
 .suggestion-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
 .suggestion-tag.fix { background: #fdf0f0; color: #c0392b; }
 .suggestion-tag.warn { background: #fdf6ec; color: #b5720a; }
 .suggestion-tag.ok { background: #e8f5ee; color: #2d7a4f; }
+.suggestion-source-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+.suggestion-source-tag.paddle { background: #e8f0fb; color: #2c5fa8; }
+.suggestion-source-tag.claude { background: #f0ede6; color: #888; border: 1px solid #e0ddd6; }
 .suggestion-section { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .suggestion-text { font-size: 13px; color: #1a1a1a; line-height: 1.6; }
 .suggestion-current { font-size: 12px; color: #888; background: #f9f8f5; border-radius: 6px; padding: 6px 9px; margin-top: 6px; border-left: 2px solid #ddd; font-style: italic; }
 .suggestion-proposed { font-size: 12px; color: #1a1a1a; background: #e8f5ee; border-radius: 6px; padding: 6px 9px; margin-top: 5px; border-left: 2px solid #2d7a4f; }
+
+/* Apply suggestions output */
+.apply-output-box { background: #f9f8f5; border: 1px solid #e0ddd6; border-radius: 8px; padding: 1rem; font-size: 13px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; max-height: 520px; overflow-y: auto; }
 
 /* Refine score comparison */
 .score-compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
@@ -222,34 +232,86 @@ textarea { min-height: 85px; }
 
     <div id="review-results" class="hidden">
 
-      <!-- Scores -->
+      <!-- Scores — Paddle Creative template -->
       <div class="card">
-        <h2>Template-based scores</h2>
-        <p class="desc">How the post currently scores against the Paddle Creative AEO/GEO optimisation template.</p>
+        <h2>Paddle Creative template scores</h2>
+        <p class="desc">How the post scores against the Paddle Creative AEO/GEO optimisation template.</p>
         <div class="score-grid">
           <div class="score-card"><div class="score-val" id="sc-template">–</div><div class="score-label">Template score</div></div>
           <div class="score-card"><div class="score-val" id="sc-aeo">–</div><div class="score-label">AEO</div></div>
           <div class="score-card"><div class="score-val" id="sc-geo">–</div><div class="score-label">GEO</div></div>
         </div>
+      </div>
+
+      <!-- Scores — Claude AI Search checks -->
+      <div class="card">
+        <h2>Claude's AI Search scores</h2>
+        <p class="desc">Additional checks covering extractability, entity clarity, citation potential, structured answer patterns, and LLM readiness — beyond the standard template.</p>
         <div class="score-grid">
           <div class="score-card"><div class="score-val" id="sc-extract">–</div><div class="score-label">Extractability</div></div>
           <div class="score-card"><div class="score-val" id="sc-entity">–</div><div class="score-label">Entity clarity</div></div>
+          <div class="score-card"><div class="score-val" id="sc-citation">–</div><div class="score-label">Citation potential</div></div>
+        </div>
+        <div class="score-grid">
+          <div class="score-card"><div class="score-val" id="sc-structure">–</div><div class="score-label">Answer structure</div></div>
+          <div class="score-card"><div class="score-val" id="sc-trust">–</div><div class="score-label">Trust signals</div></div>
           <div class="score-card"><div class="score-val" id="sc-overall">–</div><div class="score-label">Overall AI Search</div></div>
         </div>
       </div>
 
       <!-- Annotated suggestions -->
       <div class="card">
-        <h2>Annotated suggestions</h2>
-        <p class="desc">Specific, section-by-section recommendations for improving this post. Each suggestion shows what to change and why.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <h2>Annotated suggestions</h2>
+          <div style="display:flex;gap:6px">
+            <button onclick="toggleAllSuggestions(true)" class="copy-btn">Select all</button>
+            <button onclick="toggleAllSuggestions(false)" class="copy-btn">Deselect all</button>
+          </div>
+        </div>
+        <p class="desc">Tick the suggestions you want applied. <span style="background:#e8f0fb;color:#2c5fa8;font-size:11px;font-weight:600;padding:1px 7px;border-radius:8px">Template</span> findings are from the Paddle Creative AEO/GEO template. <span style="background:#f0ede6;color:#888;font-size:11px;font-weight:600;padding:1px 7px;border-radius:8px;border:1px solid #e0ddd6">Claude</span> findings are additional AI Search checks.</p>
         <div id="suggestions-list">Generating suggestions...</div>
       </div>
 
       <!-- Quick wins -->
       <div class="card">
-        <h2>Quick wins</h2>
-        <p class="desc">The fastest, highest-impact changes you can make right now.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <h2>Quick wins</h2>
+          <div style="display:flex;gap:6px">
+            <button onclick="toggleAllQuickWins(true)" class="copy-btn">Select all</button>
+            <button onclick="toggleAllQuickWins(false)" class="copy-btn">Deselect all</button>
+          </div>
+        </div>
+        <p class="desc">Tick the quick wins you want included when generating the updated post.</p>
         <div id="quick-wins-list">Generating...</div>
+      </div>
+
+      <!-- Apply selected suggestions -->
+      <div class="card" style="background:#1a1a1a;border-color:#1a1a1a">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <h2 style="color:#fff">Apply selected suggestions</h2>
+            <p style="font-size:13px;color:#aaa;margin-top:2px">Claude will rewrite the post applying only the ticked suggestions above. Internal links and CTAs are preserved.</p>
+          </div>
+          <span id="selected-count" style="font-size:12px;color:#aaa;white-space:nowrap;margin-left:1rem"></span>
+        </div>
+        <button class="btn" onclick="applySelectedSuggestions()" id="btn-apply-suggestions" style="background:#fff;color:#1a1a1a;border-color:#fff;margin-top:4px">
+          <span class="spinner hidden" id="spin-apply"></span>
+          Generate updated post →
+        </button>
+      </div>
+
+      <!-- Updated post output -->
+      <div class="card hidden" id="apply-output-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <h2>Updated post</h2>
+          <button class="copy-btn" onclick="copyText('out-applied')">Copy</button>
+        </div>
+        <p class="desc">The post with your selected suggestions applied. Copy this and use it as the input for Step 3 (internal linking), or proceed directly.</p>
+        <div class="apply-output-box" id="out-applied">Generating...</div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e0ddd6">
+          <div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Changes made</div>
+          <div id="apply-changes-summary" style="font-size:13px;color:#444;white-space:pre-wrap"></div>
+        </div>
       </div>
 
     </div>
@@ -638,9 +700,10 @@ async function runReview() {
   showSpinner('spin2', true);
   document.getElementById('btn-run-review').disabled = true;
   document.getElementById('review-results').classList.add('hidden');
+  document.getElementById('apply-output-card').classList.add('hidden');
 
   try {
-    // ── Call 1: Scores + template findings ──
+    // ── Call 1: Paddle Creative template scores ──
     const sys1 = `You are an AEO/GEO expert reviewer for Paddle Creative. Score content against the provided template. Return valid JSON only — no markdown, no explanation.`;
     const prompt1 = `Score this blog post against the Paddle Creative AEO/GEO template.
 
@@ -657,28 +720,56 @@ Return JSON:
 {
   "template_score": 0-100,
   "aeo_score": 0-100,
-  "geo_score": 0-100,
-  "extractability_score": 0-100,
-  "entity_clarity_score": 0-100,
-  "overall_score": 0-100
+  "geo_score": 0-100
 }`;
 
-    const raw1 = await callClaude(sys1, prompt1, 1000);
+    const raw1 = await callClaude(sys1, prompt1, 600);
     let scores;
     try { scores = JSON.parse(raw1.replace(/```json|```/g,'')); }
-    catch { scores = {template_score:65,aeo_score:65,geo_score:65,extractability_score:65,entity_clarity_score:65,overall_score:65}; }
-    state.originalScores = scores;
+    catch { scores = {template_score:65,aeo_score:65,geo_score:65}; }
 
-    // ── Call 2: Annotated suggestions ──
-    const sys2 = `You are a senior AEO/GEO content strategist at Paddle Creative. You review existing blog posts and produce detailed, section-by-section improvement suggestions. Return valid JSON only — no markdown, no explanation.`;
-    const prompt2 = `Review this blog post and produce annotated suggestions for improving it against the Paddle Creative AEO/GEO template and Paddle Creative's tone of voice.
+    // ── Call 2: Claude AI Search scores ──
+    const sys2 = `You are an AI search optimisation specialist. Score content across multiple AI search readiness dimensions. Return valid JSON only — no markdown, no explanation.`;
+    const prompt2 = `Score this blog post across these 6 AI Search readiness dimensions. Be precise and honest — lower scores highlight real gaps.
+
+BLOG POST:
+${state.originalContent}
+
+Scoring dimensions:
+1. extractability_score (0-100): Can AI systems easily extract specific answers, definitions, steps, and facts from this content? Does it use structured formats — TL;DR, Quick Answer, numbered steps, bullet points, Key Takeaways — that LLMs can reliably parse?
+2. entity_clarity_score (0-100): Are key entities (people, companies, products, places, concepts) named clearly and consistently? Does the content help AI systems understand relationships between entities and topics without ambiguity?
+3. citation_potential_score (0-100): How likely is an AI system (ChatGPT, Perplexity, Google AI Overviews) to cite or quote this page in a response? Does it contain unique, credible, authoritative statements? Does it have expert insight, stats, or original perspectives?
+4. answer_structure_score (0-100): Does the content directly answer likely user questions in a scannable, AI-friendly format? Are headings phrased as questions or clear topics? Is the content broken into digestible sections with clear context?
+5. trust_signal_score (0-100): Does the content demonstrate E-E-A-T (Experience, Expertise, Authority, Trust)? Does it include author attribution, expert opinions, real examples, dates, or verifiable claims? Would an AI system trust this as a credible source?
+6. overall_ai_search_score (0-100): An overall composite score across all 5 dimensions above.
+
+Return JSON:
+{
+  "extractability_score": 0-100,
+  "entity_clarity_score": 0-100,
+  "citation_potential_score": 0-100,
+  "answer_structure_score": 0-100,
+  "trust_signal_score": 0-100,
+  "overall_ai_search_score": 0-100
+}`;
+
+    const raw2 = await callClaude(sys2, prompt2, 600);
+    let aiScores;
+    try { aiScores = JSON.parse(raw2.replace(/```json|```/g,'')); }
+    catch { aiScores = {extractability_score:65,entity_clarity_score:65,citation_potential_score:65,answer_structure_score:65,trust_signal_score:65,overall_ai_search_score:65}; }
+
+    state.originalScores = { ...scores, ...aiScores };
+
+    // ── Call 3: Template-based annotated suggestions ──
+    const sys3 = `You are a senior AEO/GEO content strategist at Paddle Creative. Review blog posts and produce detailed, section-by-section improvement suggestions based on the Paddle Creative template. Return valid JSON only — no markdown, no explanation.`;
+    const prompt3 = `Review this blog post against the Paddle Creative AEO/GEO template and Paddle Creative's tone of voice. Produce annotated suggestions.
 
 BLOG POST TITLE: ${state.title || '(not provided)'}
 
 BLOG POST CONTENT:
 ${state.originalContent}
 
-AEO/GEO TEMPLATE CRITERIA:
+AEO/GEO TEMPLATE:
 ${AEO_TEMPLATE}
 
 PADDLE CREATIVE TOV:
@@ -689,58 +780,122 @@ Return JSON:
   "suggestions": [
     {
       "type": "fix|warn|ok",
-      "section": "which section or element this applies to (e.g. Introduction, TL;DR, Headings, FAQs, Key Takeaways, Tone of Voice, Key Concepts, Quick Answer, Internal Structure)",
-      "issue": "what is missing or could be improved — be specific to this post's actual content",
-      "suggestion": "exactly what to add, change, or rewrite — be actionable and specific",
-      "current_text": "quote the specific text from the post that needs changing (max 30 words), or null if it is a missing section",
-      "proposed_text": "write the improved or replacement text (or null if it is a structural/strategic recommendation)"
+      "section": "which section or element (e.g. Introduction, TL;DR, Headings, FAQs, Key Takeaways, Tone of Voice, Key Concepts, Quick Answer, CTA, Structure)",
+      "issue": "what is missing or suboptimal — be specific to this post's actual content",
+      "suggestion": "exactly what to add, change, or rewrite — actionable and specific",
+      "current_text": "quote the specific text that needs changing (max 30 words), or null if it is a missing section",
+      "proposed_text": "write the improved replacement text (or null if structural/strategic)"
     }
   ],
-  "quick_wins": ["short actionable improvement — be specific to this post, max 15 words each"]
+  "quick_wins": ["short actionable improvement specific to this post — max 15 words each"]
 }
-Include 6-10 suggestions covering the most important gaps. Include 4-6 quick wins.`;
+Include 5-8 template-based suggestions. Include 3-5 quick wins.`;
 
-    const raw2 = await callClaude(sys2, prompt2, 4000);
-    let suggestions;
-    try { suggestions = JSON.parse(raw2.replace(/```json|```/g,'')); }
-    catch { suggestions = {suggestions:[{type:'warn',section:'Parse error',issue:'Could not parse suggestions.',suggestion:'Please try again.',current_text:null,proposed_text:null}],quick_wins:[]}; }
-    state.suggestions = suggestions;
+    const raw3 = await callClaude(sys3, prompt3, 3000);
+    let templateSuggs;
+    try { templateSuggs = JSON.parse(raw3.replace(/```json|```/g,'')); }
+    catch { templateSuggs = {suggestions:[{type:'warn',section:'Parse error',issue:'Could not parse.',suggestion:'Please try again.',current_text:null,proposed_text:null}],quick_wins:[]}; }
 
-    // ── Render scores ──
+    // ── Call 4: Claude AI Search annotated suggestions ──
+    const sys4 = `You are an AI search optimisation specialist. You review blog posts for AI search readiness beyond standard AEO/GEO criteria — focusing on LLM extractability, entity resolution, citation potential, trust signals, and answer structure. Return valid JSON only.`;
+    const prompt4 = `Review this blog post for AI search readiness. Identify specific improvement opportunities beyond the standard AEO/GEO template — focusing on how LLMs (ChatGPT, Perplexity, Google AI Overviews) would process, extract from, and cite this content.
+
+BLOG POST:
+${state.originalContent}
+
+Consider these AI Search dimensions when identifying issues:
+- Extractability: Can AI parse specific facts, definitions, and steps from structured sections?
+- Entity clarity: Are topics, people, companies named and contextualised clearly?
+- Citation potential: Does it contain unique expert insight an AI would want to quote?
+- Answer structure: Are headings question-oriented? Are answers surfaced quickly?
+- Trust signals: Author attribution, expertise signals, verifiable claims, real examples?
+- Schema opportunities: FAQ schema, HowTo schema, author schema missing?
+- Semantic depth: Are related concepts, synonyms, and topic clusters addressed?
+
+Return JSON:
+{
+  "ai_suggestions": [
+    {
+      "type": "fix|warn|ok",
+      "dimension": "which AI search dimension (Extractability, Entity clarity, Citation potential, Answer structure, Trust signals, Schema, Semantic depth)",
+      "issue": "specific AI search readiness gap in this post",
+      "suggestion": "exactly what to add or change to improve AI search performance",
+      "current_text": "quote the specific text (max 30 words) or null if a missing element",
+      "proposed_text": "write the improved text or null if structural"
+    }
+  ]
+}
+Include 4-6 AI-specific suggestions that are distinct from standard AEO/GEO template checks.`;
+
+    const raw4 = await callClaude(sys4, prompt4, 2500);
+    let aiSuggs;
+    try { aiSuggs = JSON.parse(raw4.replace(/```json|```/g,'')); }
+    catch { aiSuggs = {ai_suggestions:[]}; }
+
+    // Store all suggestions together
+    state.templateSuggestions = templateSuggs.suggestions || [];
+    state.aiSuggestions = aiSuggs.ai_suggestions || [];
+    state.quickWins = templateSuggs.quick_wins || [];
+    state.allSuggestions = [
+      ...state.templateSuggestions.map(s => ({...s, source:'template'})),
+      ...state.aiSuggestions.map(s => ({...s, source:'claude', section: s.dimension || s.section}))
+    ];
+
+    // ── Render template scores ──
     ['template','aeo','geo'].forEach(k => {
       const el = document.getElementById('sc-'+k);
       el.textContent = scores[k+'_score'] || '–';
       el.className = 'score-val ' + sc(scores[k+'_score']||0);
     });
-    document.getElementById('sc-extract').textContent = scores.extractability_score || '–';
-    document.getElementById('sc-extract').className = 'score-val ' + sc(scores.extractability_score||0);
-    document.getElementById('sc-entity').textContent = scores.entity_clarity_score || '–';
-    document.getElementById('sc-entity').className = 'score-val ' + sc(scores.entity_clarity_score||0);
-    document.getElementById('sc-overall').textContent = scores.overall_score || '–';
-    document.getElementById('sc-overall').className = 'score-val ' + sc(scores.overall_score||0);
 
-    // ── Render suggestions ──
-    const suggs = suggestions.suggestions || [];
-    document.getElementById('suggestions-list').innerHTML = suggs.length
-      ? suggs.map(s => `
-          <div class="suggestion-item ${s.type}">
-            <div class="suggestion-header">
-              <span class="suggestion-tag ${s.type}">${s.type === 'fix' ? '✗ Fix' : s.type === 'warn' ? '⚠ Improve' : '✓ Good'}</span>
-              <span class="suggestion-section">${s.section || ''}</span>
+    // ── Render AI search scores ──
+    const aiScoreMap = {
+      'sc-extract': aiScores.extractability_score,
+      'sc-entity': aiScores.entity_clarity_score,
+      'sc-citation': aiScores.citation_potential_score,
+      'sc-structure': aiScores.answer_structure_score,
+      'sc-trust': aiScores.trust_signal_score,
+      'sc-overall': aiScores.overall_ai_search_score
+    };
+    Object.entries(aiScoreMap).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      el.textContent = val || '–';
+      el.className = 'score-val ' + sc(val||0);
+    });
+
+    // ── Render suggestions with checkboxes ──
+    const allSuggs = state.allSuggestions;
+    document.getElementById('suggestions-list').innerHTML = allSuggs.length
+      ? allSuggs.map((s, i) => `
+          <div class="suggestion-item ${s.type}" id="sugg-item-${i}">
+            <div class="suggestion-checkbox-row">
+              <input type="checkbox" id="sugg-cb-${i}" data-index="${i}" checked onchange="onSuggestionToggle(${i})">
+              <div class="suggestion-body">
+                <div class="suggestion-header">
+                  <span class="suggestion-tag ${s.type}">${s.type==='fix'?'✗ Fix':s.type==='warn'?'⚠ Improve':'✓ Good'}</span>
+                  <span class="suggestion-section">${s.section||''}</span>
+                  <span class="suggestion-source-tag ${s.source==='template'?'paddle':'claude'}">${s.source==='template'?'Template':'Claude AI'}</span>
+                </div>
+                <div class="suggestion-text"><strong>${s.issue}</strong></div>
+                <div class="suggestion-text" style="margin-top:4px;color:#444">${s.suggestion}</div>
+                ${s.current_text?`<div class="suggestion-current">Current: "${s.current_text}"</div>`:''}
+                ${s.proposed_text?`<div class="suggestion-proposed">Proposed: ${s.proposed_text}</div>`:''}
+              </div>
             </div>
-            <div class="suggestion-text"><strong>${s.issue}</strong></div>
-            <div class="suggestion-text" style="margin-top:4px;color:#444">${s.suggestion}</div>
-            ${s.current_text ? `<div class="suggestion-current">Current: "${s.current_text}"</div>` : ''}
-            ${s.proposed_text ? `<div class="suggestion-proposed">Proposed: ${s.proposed_text}</div>` : ''}
           </div>`).join('')
       : '<p style="color:#888;font-size:13px">No suggestions generated — try again.</p>';
 
-    // ── Render quick wins ──
-    const wins = suggestions.quick_wins || [];
+    // ── Render quick wins with checkboxes ──
+    const wins = state.quickWins;
     document.getElementById('quick-wins-list').innerHTML = wins.length
-      ? wins.map(w => `<div class="checklist-item" style="margin-bottom:6px"><span style="color:#2d7a4f;font-weight:600;margin-right:6px">→</span><span style="font-size:13px">${w}</span></div>`).join('')
+      ? wins.map((w, i) => `
+          <div class="checklist-item" style="margin-bottom:6px;cursor:pointer" id="qw-item-${i}">
+            <input type="checkbox" id="qw-cb-${i}" data-index="${i}" checked style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:#1a1a1a" onchange="updateSelectedCount()">
+            <label for="qw-cb-${i}" style="font-size:13px;cursor:pointer">${w}</label>
+          </div>`).join('')
       : '<p style="color:#888;font-size:13px">No quick wins generated.</p>';
 
+    updateSelectedCount();
     document.getElementById('review-results').classList.remove('hidden');
     document.getElementById('btn-to-links').disabled = false;
 
@@ -751,6 +906,104 @@ Include 6-10 suggestions covering the most important gaps. Include 4-6 quick win
 
   showSpinner('spin2', false);
   document.getElementById('btn-run-review').disabled = false;
+}
+
+function onSuggestionToggle(i) {
+  const item = document.getElementById('sugg-item-'+i);
+  const cb = document.getElementById('sugg-cb-'+i);
+  if (item) item.classList.toggle('unchecked', !cb.checked);
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const totalSuggs = (state.allSuggestions||[]).length;
+  const totalWins = (state.quickWins||[]).length;
+  const checkedSuggs = document.querySelectorAll('[id^="sugg-cb-"]:checked').length;
+  const checkedWins = document.querySelectorAll('[id^="qw-cb-"]:checked').length;
+  const total = checkedSuggs + checkedWins;
+  const el = document.getElementById('selected-count');
+  if (el) el.textContent = `${total} of ${totalSuggs + totalWins} selected`;
+}
+
+function toggleAllSuggestions(checked) {
+  (state.allSuggestions||[]).forEach((_, i) => {
+    const cb = document.getElementById('sugg-cb-'+i);
+    if (cb) { cb.checked = checked; onSuggestionToggle(i); }
+  });
+}
+
+function toggleAllQuickWins(checked) {
+  (state.quickWins||[]).forEach((_, i) => {
+    const cb = document.getElementById('qw-cb-'+i);
+    if (cb) cb.checked = checked;
+  });
+  updateSelectedCount();
+}
+
+async function applySelectedSuggestions() {
+  if (!state.originalContent) { alert('Please complete the review first.'); return; }
+
+  // Collect selected suggestions
+  const selectedSuggs = (state.allSuggestions||[]).filter((_, i) => {
+    const cb = document.getElementById('sugg-cb-'+i);
+    return cb && cb.checked;
+  });
+  const selectedWins = (state.quickWins||[]).filter((_, i) => {
+    const cb = document.getElementById('qw-cb-'+i);
+    return cb && cb.checked;
+  });
+
+  if (selectedSuggs.length === 0 && selectedWins.length === 0) {
+    alert('Please tick at least one suggestion or quick win to apply.');
+    return;
+  }
+
+  showSpinner('spin-apply', true);
+  document.getElementById('btn-apply-suggestions').disabled = true;
+  document.getElementById('apply-output-card').classList.remove('hidden');
+  document.getElementById('out-applied').textContent = 'Applying selected suggestions...';
+  document.getElementById('apply-changes-summary').textContent = '';
+  window.scrollTo(0, document.getElementById('apply-output-card').offsetTop - 20);
+
+  const suggList = selectedSuggs.map((s, i) =>
+    `${i+1}. [${s.section}] ${s.suggestion}${s.proposed_text ? ' — Proposed text: '+s.proposed_text : ''}`
+  ).join('\n');
+  const winList = selectedWins.map((w, i) => `${selectedSuggs.length+i+1}. ${w}`).join('\n');
+  const allInstructions = [suggList, winList].filter(Boolean).join('\n');
+
+  try {
+    const sys = `You are a senior content editor at Paddle Creative. Apply specific improvement suggestions to an existing blog post. Keep all existing CTAs, internal links, images, and core messaging intact. Improve only what the suggestions ask. Follow Paddle Creative's tone of voice. Return only the full improved blog post in markdown — no preamble.
+
+${PADDLE_TOV}`;
+
+    const prompt = `Apply these specific suggestions to improve this blog post. Address each suggestion precisely — do not rewrite content that is not mentioned. Preserve all CTAs, internal links, and the core message.
+
+BLOG POST:
+${state.originalContent}
+
+SUGGESTIONS TO APPLY:
+${allInstructions}
+
+Return the full improved blog post now.`;
+
+    const updated = (await callClaude(sys, prompt, 4000)).replace(/—/g, '–');
+    state.appliedContent = updated;
+    document.getElementById('out-applied').textContent = updated;
+
+    // Summary of changes
+    const sumSys = `You are a content reviewer. Compare two blog posts and write a concise bullet list of changes made. Be specific. Max 6 bullets. No preamble.`;
+    const summary = await callClaude(sumSys, `ORIGINAL:\n${state.originalContent}\n\nUPDATED:\n${updated}\n\nList the key changes made.`, 800);
+    document.getElementById('apply-changes-summary').textContent = summary;
+
+    // Make this the working content for subsequent steps
+    state.originalContent = updated;
+
+  } catch(e) {
+    document.getElementById('out-applied').innerHTML = `<span style="color:#c0392b">Error: ${e.message}</span>`;
+  }
+
+  showSpinner('spin-apply', false);
+  document.getElementById('btn-apply-suggestions').disabled = false;
 }
 
 // ─── STAGE 3 — Internal linking ─────────────────────────────────────────────
@@ -835,7 +1088,7 @@ async function runRefine() {
   document.getElementById('refine-results').classList.add('hidden');
 
   // Collect all suggestions into a text list
-  const suggs = state.suggestions?.suggestions || [];
+  const suggs = state.allSuggestions || state.suggestions?.suggestions || [];
   const recsList = suggs.map((s,i) => `${i+1}. [${s.section}] ${s.suggestion}${s.proposed_text ? ' — Proposed: '+s.proposed_text : ''}`).join('\n');
 
   try {
@@ -1145,6 +1398,7 @@ function startOver() {
   document.getElementById('inp-url').value = '';
   document.getElementById('inp-content').value = '';
   document.getElementById('review-results').classList.add('hidden');
+  document.getElementById('apply-output-card').classList.add('hidden');
   document.getElementById('refine-results').classList.add('hidden');
   document.getElementById('btn-to-links').disabled = true;
   document.getElementById('btn-to-refine').disabled = true;
